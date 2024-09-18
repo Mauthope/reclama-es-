@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesquisa de Reclamações</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    select, #reclamacoes {
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Pesquisa de Reclamações por Cliente</h1>
+
+  <label for="cliente">Selecione o Cliente:</label>
+  <select id="cliente" onchange="mostrarReclamacoes()">
+    <option value="">Escolha um cliente</option>
+  </select>
+
+  <h2>Reclamações:</h2>
+  <ul id="reclamacoes"></ul>
+
+  <input type="file" id="upload" accept=".xlsx" />
+  
+  <script>
+    let clientesData = [];
+
+    document.getElementById('upload').addEventListener('change', function(event) {
+      let file = event.target.files[0];
+      let reader = new FileReader();
+
+      reader.onload = function(e) {
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, { type: 'array' });
+
+        // Supondo que os dados estejam na primeira planilha
+        let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+        // Armazenar dados dos clientes e reclamações
+        clientesData = jsonData.slice(1).map(row => ({
+          cliente: row[2],  // Coluna RAZAO_SOCIAL
+          reclamacao: row[6] // Coluna PROBLEMA
+        }));
+
+        // Popular a lista suspensa com os clientes
+        let clientesSelect = document.getElementById('cliente');
+        let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
+        clientesUnicos.forEach(cliente => {
+          let option = document.createElement('option');
+          option.value = cliente;
+          option.textContent = cliente;
+          clientesSelect.appendChild(option);
+        });
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+
+    function mostrarReclamacoes() {
+      let clienteSelecionado = document.getElementById('cliente').value;
+      let reclamacoesList = document.getElementById('reclamacoes');
+      reclamacoesList.innerHTML = '';
+
+      let reclamacoes = clientesData
+        .filter(d => d.cliente === clienteSelecionado)
+        .map(d => d.reclamacao);
+
+      reclamacoes.forEach(reclamacao => {
+        let li = document.createElement('li');
+        li.textContent = reclamacao;
+        reclamacoesList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
