@@ -47,11 +47,15 @@
         let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-        // Armazenar dados dos clientes, problemas e quantidades
+        // Atualização: vamos revisar os índices das colunas
+        // RAZAO_SOCIAL (Cliente): Coluna 3 (índice 2)
+        // PROBLEMA (Descrição): Coluna 7 (índice 6)
+        // QUANT_PROBLEMA (Quantidade): Coluna 9 (índice 8)
+        
         clientesData = jsonData.slice(1).map(row => ({
           cliente: row[2],      // Coluna RAZAO_SOCIAL
           problema: row[6],     // Coluna PROBLEMA
-          quantidade: row[8]    // Coluna QUANT_PROBLEMA
+          quantidade: row[8]    // Coluna QUANT_PROBLEMA (verifique se esta coluna está preenchida corretamente na planilha)
         }));
 
         // Popular a lista suspensa com os clientes
@@ -79,7 +83,7 @@
 
       reclamacoes.forEach(reclamacao => {
         let li = document.createElement('li');
-        li.textContent = `Problema: ${reclamacao.problema} | Quantidade: ${reclamacao.quantidade}`;
+        li.textContent = `Problema: ${reclamacao.problema || 'Sem descrição'} | Quantidade: ${reclamacao.quantidade || 'Sem quantidade'}`;
         reclamacoesList.appendChild(li);
       });
     }
