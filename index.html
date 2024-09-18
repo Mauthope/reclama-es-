@@ -55,7 +55,7 @@
         clientesData = jsonData.slice(1).map(row => ({
           cliente: row[2],      // Coluna RAZAO_SOCIAL
           problema: row[6],     // Coluna PROBLEMA
-          quantidade: row[8]    // Coluna QUANT_PROBLEMA (verifique se esta coluna está preenchida corretamente na planilha)
+          quantidade: row[8]    // Coluna QUANT_PROBLEMA
         }));
 
         // Popular a lista suspensa com os clientes
