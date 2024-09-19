@@ -36,48 +36,36 @@
     <canvas id="reclamacoesChart"></canvas>
   </div>
 
-  <input type="file" id="upload" accept=".xlsx" />
-  
   <script>
     let clientesData = [];
     let chart = null;
 
-    document.getElementById('upload').addEventListener('change', function(event) {
-      let file = event.target.files[0];
-      let reader = new FileReader();
+    window.onload = function() {
+      fetch('atendimento.xlsx')
+        .then(response => response.arrayBuffer())
+        .then(data => {
+          let workbook = XLSX.read(data, { type: 'array' });
+          let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-      reader.onload = function(e) {
-        let data = new Uint8Array(e.target.result);
-        let workbook = XLSX.read(data, { type: 'array' });
+          // Processando os dados:
+          clientesData = jsonData.slice(1).map(row => ({
+            cliente: row[2],      // Coluna 3 (RAZAO_SOCIAL)
+            problema: row[4],     // Coluna 5 (PROBLEMA)
+            quantidade: row[6]    // Coluna 7 (QUANT_PROBLEMA)
+          }));
 
-        // Supondo que os dados estejam na primeira planilha
-        let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-        // Ajustar para pegar as colunas corretas:
-        // RAZAO_SOCIAL (Cliente): Coluna 3 (índice 2)
-        // PROBLEMA (Descrição): Coluna 5 (índice 4)
-        // QUANT_PROBLEMA (Quantidade): Coluna 7 (índice 6)
-        
-        clientesData = jsonData.slice(1).map(row => ({
-          cliente: row[2],      // Coluna RAZAO_SOCIAL
-          problema: row[4],     // Coluna PROBLEMA
-          quantidade: row[6]    // Coluna QUANT_PROBLEMA
-        }));
-
-        // Popular a lista suspensa com os clientes
-        let clientesSelect = document.getElementById('cliente');
-        let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
-        clientesUnicos.forEach(cliente => {
-          let option = document.createElement('option');
-          option.value = cliente;
-          option.textContent = cliente;
-          clientesSelect.appendChild(option);
+          // Popular a lista suspensa com os clientes
+          let clientesSelect = document.getElementById('cliente');
+          let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
+          clientesUnicos.forEach(cliente => {
+            let option = document.createElement('option');
+            option.value = cliente;
+            option.textContent = cliente;
+            clientesSelect.appendChild(option);
+          });
         });
-      };
-
-      reader.readAsArrayBuffer(file);
-    });
+    };
 
     function mostrarReclamacoes() {
       let clienteSelecionado = document.getElementById('cliente').value;
