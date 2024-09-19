@@ -54,15 +54,15 @@
         let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-        // Definir os índices das colunas
+        // Ajustar para pegar as colunas corretas:
         // RAZAO_SOCIAL (Cliente): Coluna 3 (índice 2)
-        // PROBLEMA (Descrição): Coluna 7 (índice 6)
-        // QUANT_PROBLEMA (Quantidade): Coluna 9 (índice 8)
+        // PROBLEMA (Descrição): Coluna 5 (índice 4)
+        // QUANT_PROBLEMA (Quantidade): Coluna 7 (índice 6)
         
         clientesData = jsonData.slice(1).map(row => ({
           cliente: row[2],      // Coluna RAZAO_SOCIAL
-          problema: row[6],     // Coluna PROBLEMA
-          quantidade: row[8]    // Coluna QUANT_PROBLEMA
+          problema: row[4],     // Coluna PROBLEMA
+          quantidade: row[6]    // Coluna QUANT_PROBLEMA
         }));
 
         // Popular a lista suspensa com os clientes
