@@ -16,6 +16,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow-y: auto; /* Adiciona barra de rolagem vertical */
     }
 
     .container {
@@ -26,6 +27,7 @@
       max-width: 600px;
       width: 100%;
       text-align: center;
+      margin-bottom: 40px;
     }
 
     h1, h2 {
@@ -85,6 +87,23 @@
 <body>
 
   <div class="container">
+    <h1>Pesquisa de Reclamações por Setor e Cliente</h1>
+
+    <label for="setor">Selecione o Setor:</label>
+    <select id="setor" onchange="mostrarReclamacoesPorSetor()">
+      <option value="">Escolha um setor</option>
+    </select>
+
+    <label for="clienteSetor">Selecione o Cliente:</label>
+    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
+      <option value="">Escolha um cliente</option>
+    </select>
+
+    <h2>Problemas por Setor e Cliente:</h2>
+    <div id="sectorChartContainer">
+      <canvas id="sectorReclamacoesChart"></canvas>
+    </div>
+
     <h1>Pesquisa de Reclamações por Cliente</h1>
 
     <label for="cliente">Selecione o Cliente:</label>
@@ -95,23 +114,6 @@
     <h2>Reclamações:</h2>
     <div id="chartContainer">
       <canvas id="reclamacoesChart"></canvas>
-    </div>
-
-    <h1>Pesquisa de Reclamações por Setor</h1>
-
-    <label for="clienteSetor">Selecione o Cliente:</label>
-    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um cliente</option>
-    </select>
-
-    <label for="setor">Selecione o Setor:</label>
-    <select id="setor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um setor</option>
-    </select>
-
-    <h2>Problemas por Setor e Cliente:</h2>
-    <div id="sectorChartContainer">
-      <canvas id="sectorReclamacoesChart"></canvas>
     </div>
   </div>
 
@@ -135,25 +137,6 @@
             quantidade: row[6]    // Coluna 7 (QUANT_PROBLEMA)
           }));
 
-          // Preencher lista de clientes
-          let clientesSelect = document.getElementById('cliente');
-          let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
-          clientesUnicos.forEach(cliente => {
-            let option = document.createElement('option');
-            option.value = cliente;
-            option.textContent = cliente;
-            clientesSelect.appendChild(option);
-          });
-
-          // Preencher lista de clientes para o filtro de setor
-          let clientesSetorSelect = document.getElementById('clienteSetor');
-          clientesUnicos.forEach(cliente => {
-            let option = document.createElement('option');
-            option.value = cliente;
-            option.textContent = cliente;
-            clientesSetorSelect.appendChild(option);
-          });
-
           // Preencher lista de setores
           let setoresSelect = document.getElementById('setor');
           let setoresUnicos = [...new Set(clientesData.map(d => d.setor))];
@@ -162,6 +145,25 @@
             option.value = setor;
             option.textContent = setor;
             setoresSelect.appendChild(option);
+          });
+
+          // Preencher lista de clientes
+          let clientesSetorSelect = document.getElementById('clienteSetor');
+          let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
+          clientesUnicos.forEach(cliente => {
+            let option = document.createElement('option');
+            option.value = cliente;
+            option.textContent = cliente;
+            clientesSetorSelect.appendChild(option);
+          });
+
+          // Preencher lista de clientes para o gráfico individual
+          let clientesSelect = document.getElementById('cliente');
+          clientesUnicos.forEach(cliente => {
+            let option = document.createElement('option');
+            option.value = cliente;
+            option.textContent = cliente;
+            clientesSelect.appendChild(option);
           });
         });
     };
@@ -237,8 +239,8 @@
 
     // Função para mostrar reclamações por setor e cliente
     function mostrarReclamacoesPorSetor() {
-      let clienteSelecionado = document.getElementById('clienteSetor').value;
       let setorSelecionado = document.getElementById('setor').value;
+      let clienteSelecionado = document.getElementById('clienteSetor').value;
 
       let reclamacoes = clientesData
         .filter(d => (!clienteSelecionado || d.cliente === clienteSelecionado) && d.setor === setorSelecionado)
