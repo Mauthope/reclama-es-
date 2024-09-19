@@ -99,12 +99,17 @@
 
     <h1>Pesquisa de Reclamações por Setor</h1>
 
+    <label for="clienteSetor">Selecione o Cliente:</label>
+    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
+      <option value="">Escolha um cliente</option>
+    </select>
+
     <label for="setor">Selecione o Setor:</label>
     <select id="setor" onchange="mostrarReclamacoesPorSetor()">
       <option value="">Escolha um setor</option>
     </select>
 
-    <h2>Problemas por Setor:</h2>
+    <h2>Problemas por Setor e Cliente:</h2>
     <div id="sectorChartContainer">
       <canvas id="sectorReclamacoesChart"></canvas>
     </div>
@@ -138,6 +143,15 @@
             option.value = cliente;
             option.textContent = cliente;
             clientesSelect.appendChild(option);
+          });
+
+          // Preencher lista de clientes para o filtro de setor
+          let clientesSetorSelect = document.getElementById('clienteSetor');
+          clientesUnicos.forEach(cliente => {
+            let option = document.createElement('option');
+            option.value = cliente;
+            option.textContent = cliente;
+            clientesSetorSelect.appendChild(option);
           });
 
           // Preencher lista de setores
@@ -221,12 +235,13 @@
       return agrupado;
     }
 
-    // Função para mostrar reclamações por setor
+    // Função para mostrar reclamações por setor e cliente
     function mostrarReclamacoesPorSetor() {
+      let clienteSelecionado = document.getElementById('clienteSetor').value;
       let setorSelecionado = document.getElementById('setor').value;
 
       let reclamacoes = clientesData
-        .filter(d => d.setor === setorSelecionado)
+        .filter(d => (!clienteSelecionado || d.cliente === clienteSelecionado) && d.setor === setorSelecionado)
         .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
       let problemasAgrupados = agruparProblemas(reclamacoes);
