@@ -3,37 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesquisa de Reclamações</title>
+  <title>Pesquisa de Reclamações por Cliente</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    select, #chartContainer {
+
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    label {
+      font-size: 18px;
+      color: #555;
+    }
+
+    select {
       margin: 10px 0;
       padding: 10px;
+      font-size: 16px;
       width: 100%;
       max-width: 400px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      outline: none;
     }
+
+    select:focus {
+      border-color: #36a2eb;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: 20px 0;
+      color: #444;
+    }
+
+    #chartContainer {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
     canvas {
       max-width: 100%;
+      height: auto;
+    }
+
+    /* Animação suave ao carregar o gráfico */
+    canvas {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+
+    canvas.loaded {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
 <body>
 
-  <h1>Pesquisa de Reclamações por Cliente</h1>
+  <div class="container">
+    <h1>Pesquisa de Reclamações por Cliente</h1>
 
-  <label for="cliente">Selecione o Cliente:</label>
-  <select id="cliente" onchange="mostrarReclamacoes()">
-    <option value="">Escolha um cliente</option>
-  </select>
+    <label for="cliente">Selecione o Cliente:</label>
+    <select id="cliente" onchange="mostrarReclamacoes()">
+      <option value="">Escolha um cliente</option>
+    </select>
 
-  <h2>Reclamações:</h2>
-  <div id="chartContainer">
-    <canvas id="reclamacoesChart"></canvas>
+    <h2>Reclamações:</h2>
+    <div id="chartContainer">
+      <canvas id="reclamacoesChart"></canvas>
+    </div>
   </div>
 
   <script>
@@ -48,14 +116,12 @@
           let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-          // Processando os dados:
           clientesData = jsonData.slice(1).map(row => ({
             cliente: row[2],      // Coluna 3 (RAZAO_SOCIAL)
             problema: row[4],     // Coluna 5 (PROBLEMA)
             quantidade: row[6]    // Coluna 7 (QUANT_PROBLEMA)
           }));
 
-          // Popular a lista suspensa com os clientes
           let clientesSelect = document.getElementById('cliente');
           let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
           clientesUnicos.forEach(cliente => {
@@ -77,7 +143,6 @@
       let problemas = reclamacoes.map(r => r.problema);
       let quantidades = reclamacoes.map(r => r.quantidade);
 
-      // Se já existir um gráfico, destruí-lo antes de criar um novo
       if (chart) {
         chart.destroy();
       }
@@ -108,6 +173,9 @@
           }
         }
       });
+
+      // Adicionar animação ao gráfico
+      document.querySelector('canvas').classList.add('loaded');
     }
   </script>
 </body>
