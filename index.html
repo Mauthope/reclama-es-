@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesquisa de Reclamações por Cliente</title>
+  <title>Pesquisa de Reclamações por Cliente e Setor</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -197,6 +197,30 @@
       document.querySelector('canvas').classList.add('loaded');
     }
 
+    // Função para agrupar os problemas semelhantes
+    function agruparProblemas(reclamacoes) {
+      let agrupado = {};
+      
+      reclamacoes.forEach(reclamacao => {
+        let problema = reclamacao.problema.toLowerCase();
+
+        if (problema.includes('refilada')) {
+          problema = 'Problema de Refilada';
+        } else if (problema.includes('válvula')) {
+          problema = 'Problema de Válvula';
+        } 
+        // Adicione mais condições conforme necessário
+
+        if (agrupado[problema]) {
+          agrupado[problema] += reclamacao.quantidade;
+        } else {
+          agrupado[problema] = reclamacao.quantidade;
+        }
+      });
+
+      return agrupado;
+    }
+
     // Função para mostrar reclamações por setor
     function mostrarReclamacoesPorSetor() {
       let setorSelecionado = document.getElementById('setor').value;
@@ -205,8 +229,10 @@
         .filter(d => d.setor === setorSelecionado)
         .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
-      let problemas = reclamacoes.map(r => r.problema);
-      let quantidades = reclamacoes.map(r => r.quantidade);
+      let problemasAgrupados = agruparProblemas(reclamacoes);
+
+      let problemas = Object.keys(problemasAgrupados);
+      let quantidades = Object.values(problemasAgrupados);
 
       if (sectorChart) {
         sectorChart.destroy();
@@ -242,5 +268,6 @@
       document.querySelector('canvas').classList.add('loaded');
     }
   </script>
+
 </body>
 </html>
