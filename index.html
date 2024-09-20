@@ -1,196 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesquisa de Reclamações por Cliente e Setor</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+  <title>Reclamações por Cliente e Setor</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f4f9;
-      margin: 0;
-      padding: 0;
-      overflow-y: scroll; /* Barra de rolagem vertical */
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start; /* Alinha no topo */
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
-
-    .container {
-      background-color: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
-      width: 100%;
-      text-align: center;
-      margin-bottom: 20px; /* Espaço para mais gráficos */
+    .chart-container {
+      width: 50%;
+      margin: 20px 0;
     }
-
-    h1, h2 {
-      font-size: 24px;
-      margin-bottom: 20px;
-      color: #333;
+    .chart-container canvas.loaded {
+      display: block;
     }
-
-    label {
-      font-size: 18px;
-      color: #555;
-    }
-
     select {
       margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      max-width: 400px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background-color: #f9f9f9;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      outline: none;
+      padding: 5px;
     }
-
-    select:focus {
-      border-color: #36a2eb;
-    }
-
-    h2 {
-      font-size: 20px;
-      margin: 20px 0;
-      color: #444;
-    }
-
-    #chartContainer, #sectorChartContainer {
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-
-    canvas.loaded {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    }
-
-    /* Adiciona barra de rolagem para todo o projeto */
-    html {
-      overflow-y: scroll;
+    .scrollable-content {
+      max-height: 90vh;
+      overflow-y: auto;
     }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <h1>Pesquisa de Reclamações por Cliente</h1>
-
-    <label for="cliente">Selecione o Cliente:</label>
-    <select id="cliente" onchange="mostrarReclamacoes()">
-      <option value="">Escolha um cliente</option>
+  <div class="scrollable-content">
+    <h2>Reclamações por Cliente</h2>
+    <select id="clienteSelect">
+      <option value="all">Todos os Clientes</option>
     </select>
-
-    <h2>Reclamações:</h2>
-    <div id="chartContainer">
-      <canvas id="reclamacoesChart"></canvas>
+    <div class="chart-container">
+      <canvas id="clienteReclamacoesChart"></canvas>
     </div>
 
-    <h1>Pesquisa de Reclamações por Setor</h1>
-
-    <!-- Colocar o filtro de setor primeiro -->
-    <label for="setor">Selecione o Setor:</label>
-    <select id="setor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um setor</option>
+    <h2>Reclamações por Setor</h2>
+    <select id="setorSelect">
+      <option value="all">Todos os Setores</option>
     </select>
-
-    <label for="clienteSetor">Selecione o Cliente:</label>
-    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um cliente</option>
+    <select id="clienteSetorSelect">
+      <option value="all">Todos os Clientes</option>
     </select>
-
-    <h2>Problemas por Setor e Cliente:</h2>
-    <div id="sectorChartContainer">
+    <div class="chart-container">
       <canvas id="sectorReclamacoesChart"></canvas>
     </div>
   </div>
 
   <script>
-    let clientesData = [];
-    let chart = null;
-    let sectorChart = null;
+    let reclamacoesData;
+    let clienteChart, sectorChart;
 
-    window.onload = function() {
-      fetch('atendimento.xlsx')
-        .then(response => response.arrayBuffer())
-        .then(data => {
-          let workbook = XLSX.read(data, { type: 'array' });
-          let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+    // Função para agrupar problemas por nome e somar as quantidades
+    function agruparProblemas(reclamacoes) {
+      let agrupado = {};
+      reclamacoes.forEach(reclamacao => {
+        let problema = reclamacao.problema;
+        let quantidade = reclamacao.quantidade;
+        if (agrupado[problema]) {
+          agrupado[problema] += quantidade;
+        } else {
+          agrupado[problema] = quantidade;
+        }
+      });
+      return agrupado;
+    }
 
-          clientesData = jsonData.slice(1).map(row => ({
-            cliente: row[2],      // Coluna 3 (RAZAO_SOCIAL)
-            setor: row[3],        // Coluna 4 (SETOR)
-            problema: row[4],     // Coluna 5 (PROBLEMA)
-            quantidade: row[6]    // Coluna 7 (QUANT_PROBLEMA)
-          }));
+    // Função para carregar os dados do Excel e inicializar os gráficos
+    function carregarDados() {
+      const file = '/mnt/data/atendimento ao cliente.xlsx'; // Ajuste o caminho conforme necessário
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        reclamacoesData = XLSX.utils.sheet_to_json(sheet, { header: 1 }).slice(1).map(row => ({
+          cliente: row[2],
+          setor: row[3],
+          problema: row[4],
+          quantidade: row[6]
+        }));
 
-          // Preencher lista de clientes
-          let clientesSelect = document.getElementById('cliente');
-          let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
-          clientesUnicos.forEach(cliente => {
-            let option = document.createElement('option');
-            option.value = cliente;
-            option.textContent = cliente;
-            clientesSelect.appendChild(option);
-          });
+        preencherSelects();
+        atualizarGraficoCliente('all');
+        document.querySelector('canvas').classList.add('loaded');
+      };
+      fetch(file).then(response => response.blob()).then(blob => reader.readAsArrayBuffer(blob));
+    }
 
-          // Preencher lista de clientes para o filtro de setor
-          let clientesSetorSelect = document.getElementById('clienteSetor');
-          clientesUnicos.forEach(cliente => {
-            let option = document.createElement('option');
-            option.value = cliente;
-            option.textContent = cliente;
-            clientesSetorSelect.appendChild(option);
-          });
+    // Preencher as opções dos selects de clientes e setores
+    function preencherSelects() {
+      let clientes = [...new Set(reclamacoesData.map(r => r.cliente))];
+      let clienteSelect = document.getElementById('clienteSelect');
+      let clienteSetorSelect = document.getElementById('clienteSetorSelect');
+      clientes.forEach(cliente => {
+        let option = document.createElement('option');
+        option.value = cliente;
+        option.textContent = cliente;
+        clienteSelect.appendChild(option);
 
-          // Preencher lista de setores
-          let setoresSelect = document.getElementById('setor');
-          let setoresUnicos = [...new Set(clientesData.map(d => d.setor))];
-          setoresUnicos.forEach(setor => {
-            let option = document.createElement('option');
-            option.value = setor;
-            option.textContent = setor;
-            setoresSelect.appendChild(option);
-          });
-        });
-    };
+        let optionSetor = document.createElement('option');
+        optionSetor.value = cliente;
+        optionSetor.textContent = cliente;
+        clienteSetorSelect.appendChild(optionSetor);
+      });
 
-    // Função para mostrar reclamações do cliente
-    function mostrarReclamacoes() {
-      let clienteSelecionado = document.getElementById('cliente').value;
+      let setores = [...new Set(reclamacoesData.map(r => r.setor))];
+      let setorSelect = document.getElementById('setorSelect');
+      setores.forEach(setor => {
+        let option = document.createElement('option');
+        option.value = setor;
+        option.textContent = setor;
+        setorSelect.appendChild(option);
+      });
+    }
 
-      let reclamacoes = clientesData
-        .filter(d => d.cliente === clienteSelecionado)
+    // Atualizar gráfico de reclamações por cliente
+    function atualizarGraficoCliente(cliente) {
+      let reclamacoes = reclamacoesData
+        .filter(d => cliente === 'all' || d.cliente === cliente)
         .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
-      let problemas = reclamacoes.map(r => r.problema);
-      let quantidades = reclamacoes.map(r => r.quantidade);
+      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
+      let problemas = Object.keys(reclamacoesAgrupadas);
+      let quantidades = Object.values(reclamacoesAgrupadas);
 
-      if (chart) {
-        chart.destroy();
+      if (clienteChart) {
+        clienteChart.destroy();
       }
 
-      let ctx = document.getElementById('reclamacoesChart').getContext('2d');
-      chart = new Chart(ctx, {
+      let ctx = document.getElementById('clienteReclamacoesChart').getContext('2d');
+      clienteChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: problemas.map((p, index) => `${p}: ${quantidades[index]} defeituosos`),
@@ -215,41 +159,12 @@
           }
         }
       });
-
-      document.querySelector('canvas').classList.add('loaded');
     }
 
-    // Função para agrupar os problemas semelhantes
-    function agruparProblemas(reclamacoes) {
-      let agrupado = {};
-      
-      reclamacoes.forEach(reclamacao => {
-        let problema = reclamacao.problema.toLowerCase();
-
-        if (problema.includes('refilada')) {
-          problema = 'Problema de Refilada';
-        } else if (problema.includes('válvula')) {
-          problema = 'Problema de Válvula';
-        } 
-        // Adicione mais condições conforme necessário
-
-        if (agrupado[problema]) {
-          agrupado[problema] += reclamacao.quantidade;
-        } else {
-          agrupado[problema] = reclamacao.quantidade;
-        }
-      });
-
-      return agrupado;
-    }
-
-    // Função para mostrar reclamações por setor e cliente
-    function mostrarReclamacoesPorSetor() {
-      let clienteSelecionado = document.getElementById('clienteSetor').value;
-      let setorSelecionado = document.getElementById('setor').value;
-
-      let reclamacoes = clientesData
-        .filter(d => (!clienteSelecionado || d.cliente === clienteSelecionado) && d.setor === setorSelecionado)
+    // Atualizar gráfico de reclamações por setor e cliente
+    function atualizarGraficoSetor(setor, cliente) {
+      let reclamacoes = reclamacoesData
+        .filter(d => (setor === 'all' || d.setor === setor) && (cliente === 'all' || d.cliente === cliente))
         .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
       let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
@@ -286,9 +201,23 @@
           }
         }
       });
-
-      document.querySelector('canvas').classList.add('loaded');
     }
+
+    // Eventos para os selects
+    document.getElementById('clienteSelect').addEventListener('change', function () {
+      atualizarGraficoCliente(this.value);
+    });
+
+    document.getElementById('setorSelect').addEventListener('change', function () {
+      atualizarGraficoSetor(this.value, document.getElementById('clienteSetorSelect').value);
+    });
+
+    document.getElementById('clienteSetorSelect').addEventListener('change', function () {
+      atualizarGraficoSetor(document.getElementById('setorSelect').value, this.value);
+    });
+
+    // Carregar dados ao abrir a página
+    window.onload = carregarDados;
   </script>
 
 </body>
