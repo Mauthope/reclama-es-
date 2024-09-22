@@ -7,7 +7,85 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Estilos permanecem inalterados */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      overflow-y: scroll;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1, h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    label {
+      font-size: 18px;
+      color: #555;
+    }
+
+    select {
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      outline: none;
+    }
+
+    select:focus {
+      border-color: #36a2eb;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: 20px 0;
+      color: #444;
+    }
+
+    #chartContainer, #sectorChartContainer {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    canvas.loaded {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+
+    html {
+      overflow-y: scroll;
+    }
   </style>
 </head>
 <body>
@@ -27,7 +105,6 @@
 
     <h1>Pesquisa de Reclamações por Setor</h1>
 
-    <!-- Colocar o filtro de setor primeiro -->
     <label for="setor">Selecione o Setor:</label>
     <select id="setor" onchange="mostrarReclamacoesPorSetor()">
       <option value="">Escolha um setor</option>
@@ -93,14 +170,60 @@
             setoresSelect.appendChild(option);
           });
 
-          // Mostrar todas as reclamações agrupadas ao carregar a página
-          mostrarReclamacoes();
+          // Exibir gráfico com todas as reclamações agrupadas
+          mostrarReclamacoesAgrupadas();
         });
     };
 
-    // Função para mostrar todas as reclamações agrupadas
-    function mostrarReclamacoes() {
+    // Função para mostrar gráfico com todas as reclamações agrupadas
+    function mostrarReclamacoesAgrupadas() {
       let reclamacoes = clientesData.map(d => ({ problema: d.problema, quantidade: d.quantidade }));
+      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
+      
+      let problemas = Object.keys(reclamacoesAgrupadas);
+      let quantidades = Object.values(reclamacoesAgrupadas);
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      let ctx = document.getElementById('reclamacoesChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: problemas.map((p, index) => `${p}: ${quantidades[index]} defeituosos`),
+          datasets: [{
+            data: quantidades,
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  return `${problemas[tooltipItem.dataIndex]}: ${quantidades[tooltipItem.dataIndex]} defeituosos`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      document.querySelector('canvas').classList.add('loaded');
+    }
+
+    // Função para mostrar reclamações do cliente selecionado
+    function mostrarReclamacoes() {
+      let clienteSelecionado = document.getElementById('cliente').value;
+
+      let reclamacoes = clientesData
+        .filter(d => d.cliente === clienteSelecionado)
+        .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
       let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
       let problemas = Object.keys(reclamacoesAgrupadas);
@@ -140,28 +263,16 @@
       document.querySelector('canvas').classList.add('loaded');
     }
 
-    // Função para agrupar os problemas semelhantes
+    // Função para agrupar os problemas
     function agruparProblemas(reclamacoes) {
-      let agrupado = {};
-      
-      reclamacoes.forEach(reclamacao => {
-        let problema = reclamacao.problema.toLowerCase();
-
-        if (problema.includes('refilada')) {
-          problema = 'Problema de Refilada';
-        } else if (problema.includes('válvula')) {
-          problema = 'Problema de Válvula';
-        } 
-        // Adicione mais condições conforme necessário
-
-        if (agrupado[problema]) {
-          agrupado[problema] += reclamacao.quantidade;
+      return reclamacoes.reduce((acc, curr) => {
+        if (acc[curr.problema]) {
+          acc[curr.problema] += curr.quantidade;
         } else {
-          agrupado[problema] = reclamacao.quantidade;
+          acc[curr.problema] = curr.quantidade;
         }
-      });
-
-      return agrupado;
+        return acc;
+      }, {});
     }
 
     // Função para mostrar reclamações por setor e cliente
@@ -170,7 +281,8 @@
       let setorSelecionado = document.getElementById('setor').value;
 
       let reclamacoes = clientesData
-        .filter(d => (!clienteSelecionado || d.cliente === clienteSelecionado) && d.setor === setorSelecionado)
+        .filter(d => (!clienteSelecionado || d.cliente === clienteSelecionado) && 
+                     (!setorSelecionado || d.setor === setorSelecionado))
         .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
       let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
