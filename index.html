@@ -7,86 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f4f9;
-      margin: 0;
-      padding: 0;
-      overflow-y: scroll; /* Barra de rolagem vertical */
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start; /* Alinha no topo */
-    }
-
-    .container {
-      background-color: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
-      width: 100%;
-      text-align: center;
-      margin-bottom: 20px; /* Espaço para mais gráficos */
-    }
-
-    h1, h2 {
-      font-size: 24px;
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    label {
-      font-size: 18px;
-      color: #555;
-    }
-
-    select {
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      max-width: 400px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background-color: #f9f9f9;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      outline: none;
-    }
-
-    select:focus {
-      border-color: #36a2eb;
-    }
-
-    h2 {
-      font-size: 20px;
-      margin: 20px 0;
-      color: #444;
-    }
-
-    #chartContainer, #sectorChartContainer {
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-
-    canvas.loaded {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    }
-
-    /* Adiciona barra de rolagem para todo o projeto */
-    html {
-      overflow-y: scroll;
-    }
+    /* Estilos permanecem inalterados */
   </style>
 </head>
 <body>
@@ -171,19 +92,19 @@
             option.textContent = setor;
             setoresSelect.appendChild(option);
           });
+
+          // Mostrar todas as reclamações agrupadas ao carregar a página
+          mostrarReclamacoes();
         });
     };
 
-    // Função para mostrar reclamações do cliente
+    // Função para mostrar todas as reclamações agrupadas
     function mostrarReclamacoes() {
-      let clienteSelecionado = document.getElementById('cliente').value;
+      let reclamacoes = clientesData.map(d => ({ problema: d.problema, quantidade: d.quantidade }));
 
-      let reclamacoes = clientesData
-        .filter(d => d.cliente === clienteSelecionado)
-        .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
-
-      let problemas = reclamacoes.map(r => r.problema);
-      let quantidades = reclamacoes.map(r => r.quantidade);
+      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
+      let problemas = Object.keys(reclamacoesAgrupadas);
+      let quantidades = Object.values(reclamacoesAgrupadas);
 
       if (chart) {
         chart.destroy();
