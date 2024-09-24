@@ -7,7 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
+   body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f4f4f9;
       margin: 0;
@@ -41,7 +41,7 @@
       color: #555;
     }
 
-    select {
+    select, input {
       margin: 10px 0;
       padding: 10px;
       font-size: 16px;
@@ -54,37 +54,38 @@
       outline: none;
     }
 
-    select:focus {
-      border-color: #36a2eb;
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #36a2eb;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
     }
 
-    h2 {
-      font-size: 20px;
-      margin: 20px 0;
-      color: #444;
-    }
-
-    #chartContainer, #sectorChartContainer {
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 20px;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     }
 
-    canvas {
-      max-width: 100%;
-      height: auto;
+    table, th, td {
+      border: 1px solid #ddd;
     }
 
-    canvas.loaded {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    th, td {
+      padding: 8px;
+      text-align: center;
     }
 
-    html {
-      overflow-y: scroll;
+    th {
+      background-color: #f2f2f2;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
     }
   </style>
 </head>
