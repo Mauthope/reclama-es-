@@ -144,6 +144,15 @@
     </table>
   </div>
 
+  <div class="container">
+    <h2>Gerar Gráfico Comparativo</h2>
+    <label for="arquivoExcel">Carregar arquivo Excel:</label>
+    <input type="file" id="arquivoExcel" accept=".xlsx, .xls">
+    <button onclick="processarExcel()">Processar Excel</button>
+
+    <canvas id="grafico"></canvas>
+  </div>
+
   <script>
     const registros = [];
 
@@ -223,7 +232,65 @@
         tbody.appendChild(row);
       });
     }
-  </script>
 
+    // Processar arquivo Excel e gerar gráfico
+    function processarExcel() {
+      const input = document.getElementById('arquivoExcel');
+      const file = input.files[0];
+
+      if (!file) {
+        alert('Por favor, selecione um arquivo Excel.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        gerarGrafico(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Função para gerar gráfico com Chart.js
+    function gerarGrafico(dados) {
+      const labels = [];
+      const valores = [];
+
+      // Considerando que os dados estão na coluna 7 e 41
+      dados.forEach((linha, index) => {
+        if (index > 0) {  // Ignorar cabeçalho
+          labels.push(linha[6]);  // Coluna 7
+          valores.push(linha[40]);  // Coluna 41
+        }
+      });
+
+      const ctx = document.getElementById('grafico').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Comparação Coluna 7 vs Coluna 41',
+            data: valores,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+  </script>
 </body>
 </html>
