@@ -41,7 +41,7 @@
       color: #555;
     }
 
-    select, input[type="file"] {
+    select {
       margin: 10px 0;
       padding: 10px;
       font-size: 16px;
@@ -64,7 +64,7 @@
       color: #444;
     }
 
-    #chartContainer, #sectorChartContainer, #tableContainer {
+    #chartContainer, #sectorChartContainer {
       margin-top: 20px;
       padding: 20px;
       background-color: #fff;
@@ -81,25 +81,6 @@
       opacity: 1;
       transform: translateY(0);
       transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    table, th, td {
-      border: 1px solid #ddd;
-    }
-
-    th, td {
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f2f2f2;
     }
 
     html {
@@ -138,32 +119,60 @@
     <div id="sectorChartContainer">
       <canvas id="sectorReclamacoesChart"></canvas>
     </div>
-
-    <h2>Inserir Reclamação</h2>
-    <input type="file" id="fileInput" accept="image/*">
-    <button onclick="inserirReclamacao()">Inserir Reclamação</button>
-
-    <h2>Reclamações Registradas</h2>
-    <div id="tableContainer">
-      <table id="reclamacoesTable">
-        <thead>
-          <tr>
-            <th>Cliente</th>
-            <th>Setor</th>
-            <th>Problema</th>
-            <th>Quantidade</th>
-            <th>Foto</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </div>
   </div>
+  <div class="container">
+    <h1>Registro de Reclamações</h1>
 
+    <label for="data">Data:</label>
+    <input type="date" id="data">
+
+    <label for="cliente">Cliente:</label>
+    <input type="text" id="cliente">
+
+    <label for="nBobina">Nº da Bobina:</label>
+    <input type="text" id="nBobina">
+
+    <label for="nFardos">Nº dos Fardos:</label>
+    <input type="text" id="nFardos">
+
+    <label for="nCaixa">Nº da Caixa:</label>
+    <input type="text" id="nCaixa">
+
+    <label for="defeito">Defeito Liberado:</label>
+    <input type="text" id="defeito">
+
+    <label for="setorOrigem">Setor de Origem:</label>
+    <input type="text" id="setorOrigem">
+
+    <label for="foto">Anexar Foto:</label>
+    <input type="file" id="foto">
+
+    <button onclick="salvarRegistro()">Salvar</button>
+
+    <h2>Pesquisar Reclamações por Cliente</h2>
+    <label for="consultaCliente">Nome do Cliente:</label>
+    <input type="text" id="consultaCliente" oninput="pesquisarPorCliente()">
+
+    <table id="tabelaReclamacoes">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Nº Bobina</th>
+          <th>Nº Fardos</th>
+          <th>Nº Caixa</th>
+          <th>Defeito Liberado</th>
+          <th>Setor Origem</th>
+          <th>Foto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Registros aparecerão aqui -->
+      </tbody>
+    </table>
+  </div>
   <script>
     let clientesData = [];
-    let reclamacoesRegistradas = [];
     let chart = null;
     let sectorChart = null;
 
@@ -192,6 +201,15 @@
             clientesSelect.appendChild(option);
           });
 
+          // Preencher lista de clientes para o filtro de setor
+          let clientesSetorSelect = document.getElementById('clienteSetor');
+          clientesUnicos.forEach(cliente => {
+            let option = document.createElement('option');
+            option.value = cliente;
+            option.textContent = cliente;
+            clientesSetorSelect.appendChild(option);
+          });
+
           // Preencher lista de setores
           let setoresSelect = document.getElementById('setor');
           let setoresUnicos = [...new Set(clientesData.map(d => d.setor))];
@@ -202,15 +220,16 @@
             setoresSelect.appendChild(option);
           });
 
+          // Exibir gráfico com todas as reclamações agrupadas
           mostrarReclamacoesAgrupadas();
         });
     };
 
-    // Função para mostrar gráfico de reclamações agrupadas
+    // Função para mostrar gráfico com todas as reclamações agrupadas
     function mostrarReclamacoesAgrupadas() {
       let reclamacoes = clientesData.map(d => ({ problema: d.problema, quantidade: d.quantidade }));
       let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
-
+      
       let problemas = Object.keys(reclamacoesAgrupadas);
       let quantidades = Object.values(reclamacoesAgrupadas);
 
@@ -233,6 +252,13 @@
           plugins: {
             legend: {
               position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  return `${problemas[tooltipItem.dataIndex]}: ${quantidades[tooltipItem.dataIndex]} defeituosos`;
+                }
+              }
             }
           }
         }
@@ -241,87 +267,15 @@
       document.querySelector('canvas').classList.add('loaded');
     }
 
-    // Função para inserir nova reclamação
-    function inserirReclamacao() {
-      let fileInput = document.getElementById('fileInput');
-      let file = fileInput.files[0];
-      if (!file) {
-        alert('Por favor, insira uma foto!');
-        return;
-      }
-
-      let reader = new FileReader();
-      reader.onload = function(e) {
-        let imageSrc = e.target.result;
-        let cliente = document.getElementById('cliente').value;
-        let setor = document.getElementById('setor').value;
-        let problema = 'Novo Problema'; // Você pode ajustar para pegar outro valor
-        let quantidade = 1; // Valor exemplo
-
-        reclamacoesRegistradas.push({
-          cliente: cliente,
-          setor: setor,
-          problema: problema,
-          quantidade: quantidade,
-          foto: imageSrc
-        });
-
-        atualizarTabela();
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // Função para atualizar a tabela de reclamações
-    function atualizarTabela() {
-      let tbody = document.getElementById('reclamacoesTable').querySelector('tbody');
-      tbody.innerHTML = '';
-
-      reclamacoesRegistradas.forEach(reclamacao => {
-        let row = document.createElement('tr');
-
-        let clienteTd = document.createElement('td');
-        clienteTd.textContent = reclamacao.cliente;
-        row.appendChild(clienteTd);
-
-        let setorTd = document.createElement('td');
-        setorTd.textContent = reclamacao.setor;
-        row.appendChild(setorTd);
-
-        let problemaTd = document.createElement('td');
-        problemaTd.textContent = reclamacao.problema;
-        row.appendChild(problemaTd);
-
-        let quantidadeTd = document.createElement('td');
-        quantidadeTd.textContent = reclamacao.quantidade;
-        row.appendChild(quantidadeTd);
-
-        let fotoTd = document.createElement('td');
-        let img = document.createElement('img');
-        img.src = reclamacao.foto;
-        img.style.width = '50px';
-        img.style.height = '50px';
-        fotoTd.appendChild(img);
-        row.appendChild(fotoTd);
-
-        tbody.appendChild(row);
-      });
-    }
-
-    // Função para agrupar problemas por quantidade
-    function agruparProblemas(problemas) {
-      let agrupado = {};
-      problemas.forEach(p => {
-        agrupado[p.problema] = (agrupado[p.problema] || 0) + p.quantidade;
-      });
-      return agrupado;
-    }
-
-    // Função para exibir reclamações por cliente
+    // Função para mostrar reclamações do cliente selecionado
     function mostrarReclamacoes() {
       let clienteSelecionado = document.getElementById('cliente').value;
-      let reclamacoes = clientesData.filter(d => d.cliente === clienteSelecionado).map(d => ({ problema: d.problema, quantidade: d.quantidade }));
-      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
 
+      let reclamacoes = clientesData
+        .filter(d => d.cliente === clienteSelecionado)
+        .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
+
+      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
       let problemas = Object.keys(reclamacoesAgrupadas);
       let quantidades = Object.values(reclamacoesAgrupadas);
 
@@ -344,6 +298,13 @@
           plugins: {
             legend: {
               position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  return `${problemas[tooltipItem.dataIndex]}: ${quantidades[tooltipItem.dataIndex]} defeituosos`;
+                }
+              }
             }
           }
         }
@@ -352,13 +313,29 @@
       document.querySelector('canvas').classList.add('loaded');
     }
 
-    // Função para exibir reclamações por cliente e setor
-    function mostrarReclamacoesPorSetor() {
-      let setorSelecionado = document.getElementById('setor').value;
-      let clienteSelecionado = document.getElementById('clienteSetor').value;
-      let reclamacoes = clientesData.filter(d => d.setor === setorSelecionado && (!clienteSelecionado || d.cliente === clienteSelecionado)).map(d => ({ problema: d.problema, quantidade: d.quantidade }));
-      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
+    // Função para agrupar os problemas
+    function agruparProblemas(reclamacoes) {
+      return reclamacoes.reduce((acc, curr) => {
+        if (acc[curr.problema]) {
+          acc[curr.problema] += curr.quantidade;
+        } else {
+          acc[curr.problema] = curr.quantidade;
+        }
+        return acc;
+      }, {});
+    }
 
+    // Função para mostrar reclamações por setor e cliente
+    function mostrarReclamacoesPorSetor() {
+      let clienteSelecionado = document.getElementById('clienteSetor').value;
+      let setorSelecionado = document.getElementById('setor').value;
+
+      let reclamacoes = clientesData
+        .filter(d => (!clienteSelecionado || d.cliente === clienteSelecionado) && 
+                     (!setorSelecionado || d.setor === setorSelecionado))
+        .map(d => ({ problema: d.problema, quantidade: d.quantidade }));
+
+      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
       let problemas = Object.keys(reclamacoesAgrupadas);
       let quantidades = Object.values(reclamacoesAgrupadas);
 
@@ -368,26 +345,110 @@
 
       let ctx = document.getElementById('sectorReclamacoesChart').getContext('2d');
       sectorChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'pie',
         data: {
-          labels: problemas,
+          labels: problemas.map((p, index) => `${p}: ${quantidades[index]} defeituosos`),
           datasets: [{
-            label: 'Quantidade de Reclamações',
             data: quantidades,
-            backgroundColor: '#36A2EB',
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
           }]
         },
         options: {
           responsive: true,
           plugins: {
             legend: {
-              display: false
+              position: 'top',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(tooltipItem) {
+                  return `${problemas[tooltipItem.dataIndex]}: ${quantidades[tooltipItem.dataIndex]} defeituosos`;
+                }
+              }
             }
           }
         }
       });
 
       document.querySelector('canvas').classList.add('loaded');
+    }
+    const registros = [];
+
+    // Função para salvar o registro
+    function salvarRegistro() {
+      const data = document.getElementById('data').value;
+      const cliente = document.getElementById('cliente').value;
+      const nBobina = document.getElementById('nBobina').value;
+      const nFardos = document.getElementById('nFardos').value;
+      const nCaixa = document.getElementById('nCaixa').value;
+      const defeito = document.getElementById('defeito').value;
+      const setorOrigem = document.getElementById('setorOrigem').value;
+      const foto = document.getElementById('foto').files[0] ? URL.createObjectURL(document.getElementById('foto').files[0]) : '';
+
+      // Adiciona os dados ao array de registros
+      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto });
+
+      // Limpar os campos após salvar
+      document.getElementById('data').value = '';
+      document.getElementById('cliente').value = '';
+      document.getElementById('nBobina').value = '';
+      document.getElementById('nFardos').value = '';
+      document.getElementById('nCaixa').value = '';
+      document.getElementById('defeito').value = '';
+      document.getElementById('setorOrigem').value = '';
+      document.getElementById('foto').value = '';
+
+      // Atualizar a tabela de registros
+      atualizarTabela();
+    }
+
+    // Função para atualizar a tabela com os registros
+    function atualizarTabela() {
+      const tbody = document.querySelector('#tabelaReclamacoes tbody');
+      tbody.innerHTML = '';  // Limpar tabela
+
+      registros.forEach(registro => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+          <td>${registro.data}</td>
+          <td>${registro.cliente}</td>
+          <td>${registro.nBobina}</td>
+          <td>${registro.nFardos}</td>
+          <td>${registro.nCaixa}</td>
+          <td>${registro.defeito}</td>
+          <td>${registro.setorOrigem}</td>
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Função para filtrar os registros pelo cliente
+    function pesquisarPorCliente() {
+      const clientePesquisa = document.getElementById('consultaCliente').value.toLowerCase();
+      const tbody = document.querySelector('#tabelaReclamacoes tbody');
+      tbody.innerHTML = '';  // Limpar tabela
+
+      const registrosFiltrados = registros.filter(registro => 
+        registro.cliente.toLowerCase().includes(clientePesquisa)
+      );
+
+      registrosFiltrados.forEach(registro => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+          <td>${registro.data}</td>
+          <td>${registro.cliente}</td>
+          <td>${registro.nBobina}</td>
+          <td>${registro.nFardos}</td>
+          <td>${registro.nCaixa}</td>
+          <td>${registro.defeito}</td>
+          <td>${registro.setorOrigem}</td>
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
+        `;
+        tbody.appendChild(row);
+      });
     }
   </script>
 
