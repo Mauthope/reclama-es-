@@ -40,27 +40,27 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 10px 0; /* Ajustado para maior espaçamento */
+      margin: 10px 0;
     }
 
     label {
       font-size: 18px;
       color: #555;
-      width: 40%; /* Ajuste na largura do rótulo */
-      text-align: right; /* Alinha o texto do rótulo à direita */
-      margin-right: 10px; /* Espaçamento entre o rótulo e o campo */
+      width: 40%;
+      text-align: right;
+      margin-right: 10px;
     }
 
     select, input {
       padding: 10px;
       font-size: 16px;
-      width: calc(60% - 22px); /* Ajusta a largura para o padding e borda */
+      width: calc(60% - 22px);
       border-radius: 8px;
       border: 1px solid #ccc;
       background-color: #f9f9f9;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       outline: none;
-      box-sizing: border-box; /* Garante que o padding não afete a largura */
+      box-sizing: border-box;
     }
 
     button {
@@ -95,6 +95,36 @@
 
     input[type="file"] {
       margin-top: 10px;
+    }
+
+    /* Estilos para a imagem expandida */
+    .modal {
+      display: none; /* Oculta o modal por padrão */
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-content {
+      margin: auto;
+      display: block;
+      max-width: 80%;
+      max-height: 80%;
+    }
+
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 35px;
+      color: white;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -148,7 +178,7 @@
 
     <div class="field-container">
       <label for="foto">Anexar Foto:</label>
-      <input type="file" id="foto">
+      <input type="file" id="foto" accept="image/*">
     </div>
 
     <button onclick="salvarRegistro()">Salvar</button>
@@ -179,6 +209,12 @@
     </table>
   </div>
 
+  <!-- Modal para imagem expandida -->
+  <div id="myModal" class="modal">
+    <span class="close" onclick="fecharModal()">&times;</span>
+    <img class="modal-content" id="imgExpandida">
+  </div>
+
   <script>
     const registros = JSON.parse(localStorage.getItem('registros')) || [];
 
@@ -191,10 +227,15 @@
       const nCaixa = document.getElementById('nCaixa').value;
       const defeito = document.getElementById('defeito').value;
       const setorOrigem = document.getElementById('setorOrigem').value;
-      const foto = document.getElementById('foto').files[0] ? URL.createObjectURL(document.getElementById('foto').files[0]) : '';
+      const fotoInput = document.getElementById('foto').files[0];
+
+      let fotoUrl = '';
+      if (fotoInput) {
+        fotoUrl = URL.createObjectURL(fotoInput);
+      }
 
       // Adiciona os dados ao array de registros
-      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto });
+      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto: fotoUrl });
 
       // Salvar no localStorage
       localStorage.setItem('registros', JSON.stringify(registros));
@@ -229,37 +270,25 @@
           <td>${registro.nCaixa}</td>
           <td>${registro.defeito}</td>
           <td>${registro.setorOrigem}</td>
-          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;" onclick="expandirImagem('${registro.foto}')"></td>
         `;
         tbody.appendChild(row);
       });
     }
 
-    // Função para filtrar os registros pelo cliente
-    function pesquisarPorCliente() {
-      const clientePesquisa = document.getElementById('consultaCliente').value.toLowerCase();
-      const tbody = document.querySelector('#tabelaReclamacoes tbody');
-      tbody.innerHTML = '';  // Limpar tabela
+    // Função para expandir a imagem
+    function expandirImagem(fotoUrl) {
+      const modal = document.getElementById("myModal");
+      const imgExpandida = document.getElementById("imgExpandida");
 
-      const registrosFiltrados = registros.filter(registro => 
-        registro.cliente.toLowerCase().includes(clientePesquisa)
-      );
+      imgExpandida.src = fotoUrl;
+      modal.style.display = "block"; // Mostra o modal
+    }
 
-      registrosFiltrados.forEach(registro => {
-        const row = document.createElement('tr');
-        
-        row.innerHTML = `
-          <td>${registro.data}</td>
-          <td>${registro.cliente}</td>
-          <td>${registro.nBobina}</td>
-          <td>${registro.nFardos}</td>
-          <td>${registro.nCaixa}</td>
-          <td>${registro.defeito}</td>
-          <td>${registro.setorOrigem}</td>
-          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
-        `;
-        tbody.appendChild(row);
-      });
+    // Função para fechar o modal
+    function fecharModal() {
+      const modal = document.getElementById("myModal");
+      modal.style.display = "none"; // Oculta o modal
     }
 
     // Função para baixar os registros em CSV
@@ -277,6 +306,30 @@
       link.setAttribute("download", "reclamacoes.csv");
       document.body.appendChild(link); // Required for FF
       link.click();
+    }
+
+    // Função para pesquisar por cliente
+    function pesquisarPorCliente() {
+      const consultaCliente = document.getElementById('consultaCliente').value.toLowerCase();
+      const tbody = document.querySelector('#tabelaReclamacoes tbody');
+      tbody.innerHTML = '';
+
+      registros.forEach(registro => {
+        if (registro.cliente.toLowerCase().includes(consultaCliente)) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${registro.data}</td>
+            <td>${registro.cliente}</td>
+            <td>${registro.nBobina}</td>
+            <td>${registro.nFardos}</td>
+            <td>${registro.nCaixa}</td>
+            <td>${registro.defeito}</td>
+            <td>${registro.setorOrigem}</td>
+            <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;" onclick="expandirImagem('${registro.foto}')"></td>
+          `;
+          tbody.appendChild(row);
+        }
+      });
     }
 
     // Atualizar tabela na inicialização
