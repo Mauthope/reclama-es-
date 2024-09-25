@@ -87,7 +87,6 @@
     input[type="file"] {
       margin-top: 10px;
     }
-
   </style>
 </head>
 <body>
@@ -111,15 +110,24 @@
     <input type="text" id="nCaixa">
 
     <label for="defeito">Defeito Liberado:</label>
-    <input type="text" id="defeito">
+    <select id="defeito">
+      <option value="Rasgo">Rasgo</option>
+      <option value="Furo">Furo</option>
+      <option value="Descolamento">Descolamento</option>
+    </select>
 
     <label for="setorOrigem">Setor de Origem:</label>
-    <input type="text" id="setorOrigem">
+    <select id="setorOrigem">
+      <option value="Produção">Produção</option>
+      <option value="Qualidade">Qualidade</option>
+      <option value="Logística">Logística</option>
+    </select>
 
     <label for="foto">Anexar Foto:</label>
     <input type="file" id="foto">
 
     <button onclick="salvarRegistro()">Salvar</button>
+    <button onclick="downloadCSV()">Download CSV</button>
 
     <h2>Pesquisar Reclamações por Cliente</h2>
     <label for="consultaCliente">Nome do Cliente:</label>
@@ -145,7 +153,7 @@
   </div>
 
   <script>
-    const registros = [];
+    const registros = JSON.parse(localStorage.getItem('registros')) || [];
 
     // Função para salvar o registro
     function salvarRegistro() {
@@ -160,6 +168,9 @@
 
       // Adiciona os dados ao array de registros
       registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto });
+
+      // Salvar no localStorage
+      localStorage.setItem('registros', JSON.stringify(registros));
 
       // Limpar os campos após salvar
       document.getElementById('data').value = '';
@@ -223,7 +234,26 @@
         tbody.appendChild(row);
       });
     }
-  </script>
 
+    // Função para baixar os registros em CSV
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8," 
+        + "Data,Cliente,Nº Bobina,Nº Fardos,Nº Caixa,Defeito Liberado,Setor Origem,Foto\n";
+
+      registros.forEach(registro => {
+        csvContent += `${registro.data},${registro.cliente},${registro.nBobina},${registro.nFardos},${registro.nCaixa},${registro.defeito},${registro.setorOrigem},${registro.foto}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "reclamacoes.csv");
+      document.body.appendChild(link); // Required for FF
+      link.click();
+    }
+
+    // Atualizar tabela na inicialização
+    atualizarTabela();
+  </script>
 </body>
 </html>
