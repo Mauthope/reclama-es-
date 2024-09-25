@@ -36,31 +36,25 @@
       color: #333;
     }
 
-    .field-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 10px 0;
-    }
-
     label {
       font-size: 18px;
       color: #555;
-      width: 40%;
-      text-align: right;
-      margin-right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     select, input {
+      margin: 10px 0;
       padding: 10px;
       font-size: 16px;
-      width: calc(60% - 22px);
+      width: 100%;
+      max-width: 400px;
       border-radius: 8px;
       border: 1px solid #ccc;
       background-color: #f9f9f9;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       outline: none;
-      box-sizing: border-box;
     }
 
     button {
@@ -97,35 +91,6 @@
       margin-top: 10px;
     }
 
-    /* Estilos para a imagem expandida */
-    .modal {
-      display: none; /* Oculta o modal por padrão */
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0, 0, 0, 0.8);
-    }
-
-    .modal-content {
-      margin: auto;
-      display: block;
-      max-width: 80%;
-      max-height: 80%;
-    }
-
-    .close {
-      position: absolute;
-      top: 15px;
-      right: 35px;
-      color: white;
-      font-size: 40px;
-      font-weight: bold;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -133,62 +98,36 @@
   <div class="container">
     <h1>Registro de Reclamações</h1>
 
-    <div class="field-container">
-      <label for="data">Data:</label>
-      <input type="date" id="data">
-    </div>
+    <label for="data">Data:</label>
+    <input type="date" id="data">
 
-    <div class="field-container">
-      <label for="cliente">Cliente:</label>
-      <input type="text" id="cliente">
-    </div>
+    <label for="cliente">Cliente:</label>
+    <input type="text" id="cliente">
 
-    <div class="field-container">
-      <label for="nBobina">Nº da Bobina:</label>
-      <input type="text" id="nBobina">
-    </div>
+    <label for="nBobina">Nº da Bobina:</label>
+    <input type="text" id="nBobina">
 
-    <div class="field-container">
-      <label for="nFardos">Nº dos Fardos:</label>
-      <input type="text" id="nFardos">
-    </div>
+    <label for="nFardos">Nº dos Fardos:</label>
+    <input type="text" id="nFardos">
 
-    <div class="field-container">
-      <label for="nCaixa">Nº da Caixa:</label>
-      <input type="text" id="nCaixa">
-    </div>
+    <label for="nCaixa">Nº da Caixa:</label>
+    <input type="text" id="nCaixa">
 
-    <div class="field-container">
-      <label for="defeito">Defeito Liberado:</label>
-      <select id="defeito">
-        <option value="Rasgo">Rasgo</option>
-        <option value="Furo">Furo</option>
-        <option value="Descolamento">Descolamento</option>
-      </select>
-    </div>
+    <label for="defeito">Defeito Liberado:</label>
+    <input type="text" id="defeito">
 
-    <div class="field-container">
-      <label for="setorOrigem">Setor de Origem:</label>
-      <select id="setorOrigem">
-        <option value="Produção"></option>
-        <option value="Qualidade">Qualidade</option>
-        <option value="Logística">Logística</option>
-      </select>
-    </div>
+    <label for="setorOrigem">Setor de Origem:</label>
+    <input type="text" id="setorOrigem">
 
-    <div class="field-container">
-      <label for="foto">Anexar Foto:</label>
-      <input type="file" id="foto" accept="image/*">
-    </div>
+    <label for="foto">Anexar Foto:</label>
+    <input type="file" id="foto">
 
     <button onclick="salvarRegistro()">Salvar</button>
-    <button onclick="downloadCSV()">Download CSV</button>
+    <button onclick="downloadExcel()">Download Excel</button>
 
     <h2>Pesquisar Reclamações por Cliente</h2>
-    <div class="field-container">
-      <label for="consultaCliente">Nome do Cliente:</label>
-      <input type="text" id="consultaCliente" oninput="pesquisarPorCliente()">
-    </div>
+    <label for="consultaCliente">Nome do Cliente:</label>
+    <input type="text" id="consultaCliente" oninput="pesquisarPorCliente()">
 
     <table id="tabelaReclamacoes">
       <thead>
@@ -209,14 +148,8 @@
     </table>
   </div>
 
-  <!-- Modal para imagem expandida -->
-  <div id="myModal" class="modal">
-    <span class="close" onclick="fecharModal()">&times;</span>
-    <img class="modal-content" id="imgExpandida">
-  </div>
-
   <script>
-    const registros = JSON.parse(localStorage.getItem('registros')) || [];
+    const registros = [];
 
     // Função para salvar o registro
     function salvarRegistro() {
@@ -227,18 +160,10 @@
       const nCaixa = document.getElementById('nCaixa').value;
       const defeito = document.getElementById('defeito').value;
       const setorOrigem = document.getElementById('setorOrigem').value;
-      const fotoInput = document.getElementById('foto').files[0];
-
-      let fotoUrl = '';
-      if (fotoInput) {
-        fotoUrl = URL.createObjectURL(fotoInput);
-      }
+      const foto = document.getElementById('foto').files[0] ? URL.createObjectURL(document.getElementById('foto').files[0]) : '';
 
       // Adiciona os dados ao array de registros
-      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto: fotoUrl });
-
-      // Salvar no localStorage
-      localStorage.setItem('registros', JSON.stringify(registros));
+      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto });
 
       // Limpar os campos após salvar
       document.getElementById('data').value = '';
@@ -270,70 +195,67 @@
           <td>${registro.nCaixa}</td>
           <td>${registro.defeito}</td>
           <td>${registro.setorOrigem}</td>
-          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;" onclick="expandirImagem('${registro.foto}')"></td>
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
         `;
         tbody.appendChild(row);
       });
     }
 
-    // Função para expandir a imagem
-    function expandirImagem(fotoUrl) {
-      const modal = document.getElementById("myModal");
-      const imgExpandida = document.getElementById("imgExpandida");
-
-      imgExpandida.src = fotoUrl;
-      modal.style.display = "block"; // Mostra o modal
-    }
-
-    // Função para fechar o modal
-    function fecharModal() {
-      const modal = document.getElementById("myModal");
-      modal.style.display = "none"; // Oculta o modal
-    }
-
-    // Função para baixar os registros em CSV
-    function downloadCSV() {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Data,Cliente,Nº Bobina,Nº Fardos,Nº Caixa,Defeito Liberado,Setor Origem,Foto\n";
-
-      registros.forEach(registro => {
-        csvContent += `${registro.data},${registro.cliente},${registro.nBobina},${registro.nFardos},${registro.nCaixa},${registro.defeito},${registro.setorOrigem},${registro.foto}\n`;
-      });
-
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "reclamacoes.csv");
-      document.body.appendChild(link); // Required for FF
-      link.click();
-    }
-
-    // Função para pesquisar por cliente
+    // Função para filtrar os registros pelo cliente
     function pesquisarPorCliente() {
-      const consultaCliente = document.getElementById('consultaCliente').value.toLowerCase();
+      const clientePesquisa = document.getElementById('consultaCliente').value.toLowerCase();
       const tbody = document.querySelector('#tabelaReclamacoes tbody');
-      tbody.innerHTML = '';
+      tbody.innerHTML = '';  // Limpar tabela
 
-      registros.forEach(registro => {
-        if (registro.cliente.toLowerCase().includes(consultaCliente)) {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${registro.data}</td>
-            <td>${registro.cliente}</td>
-            <td>${registro.nBobina}</td>
-            <td>${registro.nFardos}</td>
-            <td>${registro.nCaixa}</td>
-            <td>${registro.defeito}</td>
-            <td>${registro.setorOrigem}</td>
-            <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;" onclick="expandirImagem('${registro.foto}')"></td>
-          `;
-          tbody.appendChild(row);
-        }
+      const registrosFiltrados = registros.filter(registro => 
+        registro.cliente.toLowerCase().includes(clientePesquisa)
+      );
+
+      registrosFiltrados.forEach(registro => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+          <td>${registro.data}</td>
+          <td>${registro.cliente}</td>
+          <td>${registro.nBobina}</td>
+          <td>${registro.nFardos}</td>
+          <td>${registro.nCaixa}</td>
+          <td>${registro.defeito}</td>
+          <td>${registro.setorOrigem}</td>
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
+        `;
+        tbody.appendChild(row);
       });
     }
 
-    // Atualizar tabela na inicialização
-    atualizarTabela();
+    // Função para baixar os registros em Excel
+    function downloadExcel() {
+      // Criar uma nova pasta de trabalho
+      const wb = XLSX.utils.book_new();
+      const wsData = [
+        ["Data", "Cliente", "Nº Bobina", "Nº Fardos", "Nº Caixa", "Defeito Liberado", "Setor Origem", "Foto"],
+      ];
+
+      // Adiciona os dados à matriz
+      registros.forEach(registro => {
+        wsData.push([
+          registro.data,
+          registro.cliente,
+          registro.nBobina,
+          registro.nFardos,
+          registro.nCaixa,
+          registro.defeito,
+          registro.setorOrigem,
+          registro.foto, // Você pode usar o URL da imagem
+        ]);
+      });
+
+      // Criar uma nova planilha
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Faz o download do arquivo Excel
+      XLSX.writeFile(wb, "reclamacoes.xlsx");
+    }
   </script>
 </body>
 </html>
