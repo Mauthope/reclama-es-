@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesquisa de Reclamações</title>
+  <title>Registro e Pesquisa de Reclamações</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -12,6 +12,7 @@
       background-color: #f4f4f9;
       margin: 0;
       padding: 0;
+      overflow-y: scroll;
       height: 100vh;
       display: flex;
       justify-content: center;
@@ -26,6 +27,7 @@
       max-width: 600px;
       width: 100%;
       text-align: center;
+      margin-bottom: 20px;
     }
 
     h1, h2 {
@@ -37,19 +39,19 @@
     label {
       font-size: 18px;
       color: #555;
-      display: block;
-      text-align: left;
-      margin-top: 10px;
     }
 
     select, input {
-      width: 100%;
+      margin: 10px 0;
       padding: 10px;
-      margin-top: 5px;
       font-size: 16px;
+      width: 100%;
+      max-width: 400px;
       border-radius: 8px;
       border: 1px solid #ccc;
       background-color: #f9f9f9;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      outline: none;
     }
 
     button {
@@ -60,7 +62,7 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
     table {
@@ -69,101 +71,119 @@
       margin-top: 20px;
     }
 
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
     th, td {
       padding: 8px;
-      border: 1px solid #ddd;
       text-align: center;
     }
 
     th {
       background-color: #f2f2f2;
     }
+
+    input[type="file"] {
+      margin-top: 10px;
+    }
+
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>Registro de Reclamações</h1>
+  <div class="container">
+    <h1>Registro de Reclamações</h1>
 
-  <label for="data">Data:</label>
-  <input type="date" id="data">
+    <label for="data">Data:</label>
+    <input type="date" id="data">
 
-  <label for="cliente">Cliente:</label>
-  <input type="text" id="cliente">
+    <label for="cliente">Cliente:</label>
+    <input type="text" id="cliente">
 
-  <label for="nBobina">Nº da Bobina:</label>
-  <input type="text" id="nBobina">
+    <label for="nBobina">Nº da Bobina:</label>
+    <input type="text" id="nBobina">
 
-  <label for="nFardos">Nº dos Fardos:</label>
-  <input type="text" id="nFardos">
+    <label for="nFardos">Nº dos Fardos:</label>
+    <input type="text" id="nFardos">
 
-  <label for="nCaixa">Nº da Caixa:</label>
-  <input type="text" id="nCaixa">
+    <label for="nCaixa">Nº da Caixa:</label>
+    <input type="text" id="nCaixa">
 
-  <label for="defeito">Defeito Liberado:</label>
-  <select id="defeito">
-    <option value="Falha de Lâmina">Falha de Lâmina</option>
-    <option value="Falha de Impressão">Falha de Impressão</option>
-    <option value="Dobrado">Dobrado</option>
-  </select>
+    <label for="defeito">Defeito Liberado:</label>
+    <input type="text" id="defeito">
 
-  <label for="setorOrigem">Setor de Origem:</label>
-  <input type="text" id="setorOrigem">
+    <label for="setorOrigem">Setor de Origem:</label>
+    <input type="text" id="setorOrigem">
 
-  <label for="foto">Anexar Foto:</label>
-  <input type="file" id="foto">
+    <label for="foto">Anexar Foto:</label>
+    <input type="file" id="foto">
 
-  <button onclick="salvarRegistro()">Salvar</button>
-  <button onclick="baixarCSV()">Baixar CSV</button>
+    <button onclick="salvarRegistro()">Salvar</button>
 
-  <h2>Registros</h2>
-  <table id="tabelaReclamacoes">
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Cliente</th>
-        <th>Nº Bobina</th>
-        <th>Nº Fardos</th>
-        <th>Nº Caixa</th>
-        <th>Defeito Liberado</th>
-        <th>Setor Origem</th>
-        <th>Foto</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Registros aparecerão aqui -->
-    </tbody>
-  </table>
-</div>
+    <h2>Pesquisar Reclamações por Cliente</h2>
+    <label for="consultaCliente">Nome do Cliente:</label>
+    <input type="text" id="consultaCliente" oninput="pesquisarPorCliente()">
 
-<script>
-  let registros = JSON.parse(localStorage.getItem('registros')) || [];
-
-  // Função para salvar o registro no localStorage
-  function salvarRegistro() {
-    const data = document.getElementById('data').value;
-    const cliente = document.getElementById('cliente').value;
-    const nBobina = document.getElementById('nBobina').value;
-    const nFardos = document.getElementById('nFardos').value;
-    const nCaixa = document.getElementById('nCaixa').value;
-    const defeito = document.getElementById('defeito').value;
-    const setorOrigem = document.getElementById('setorOrigem').value;
-    const foto = document.getElementById('foto').files[0] ? document.getElementById('foto').files[0].name : 'Nenhuma';
-
-    const registro = { data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto };
-    registros.push(registro);
-    localStorage.setItem('registros', JSON.stringify(registros));
-    mostrarRegistros();
-    limparCampos();
-  }
-
-  // Função para mostrar os registros na tabela
-  function mostrarRegistros() {
-    const tbody = document.querySelector('#tabelaReclamacoes tbody');
-    tbody.innerHTML = '';
-    registros.forEach((registro, index) => {
-      const row = `
+    <table id="tabelaReclamacoes">
+      <thead>
         <tr>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Nº Bobina</th>
+          <th>Nº Fardos</th>
+          <th>Nº Caixa</th>
+          <th>Defeito Liberado</th>
+          <th>Setor Origem</th>
+          <th>Foto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Registros aparecerão aqui -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const registros = [];
+
+    // Função para salvar o registro
+    function salvarRegistro() {
+      const data = document.getElementById('data').value;
+      const cliente = document.getElementById('cliente').value;
+      const nBobina = document.getElementById('nBobina').value;
+      const nFardos = document.getElementById('nFardos').value;
+      const nCaixa = document.getElementById('nCaixa').value;
+      const defeito = document.getElementById('defeito').value;
+      const setorOrigem = document.getElementById('setorOrigem').value;
+      const foto = document.getElementById('foto').files[0] ? URL.createObjectURL(document.getElementById('foto').files[0]) : '';
+
+      // Adiciona os dados ao array de registros
+      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto });
+
+      // Limpar os campos após salvar
+      document.getElementById('data').value = '';
+      document.getElementById('cliente').value = '';
+      document.getElementById('nBobina').value = '';
+      document.getElementById('nFardos').value = '';
+      document.getElementById('nCaixa').value = '';
+      document.getElementById('defeito').value = '';
+      document.getElementById('setorOrigem').value = '';
+      document.getElementById('foto').value = '';
+
+      // Atualizar a tabela de registros
+      atualizarTabela();
+    }
+
+    // Função para atualizar a tabela com os registros
+    function atualizarTabela() {
+      const tbody = document.querySelector('#tabelaReclamacoes tbody');
+      tbody.innerHTML = '';  // Limpar tabela
+
+      registros.forEach(registro => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
           <td>${registro.data}</td>
           <td>${registro.cliente}</td>
           <td>${registro.nBobina}</td>
@@ -171,54 +191,39 @@
           <td>${registro.nCaixa}</td>
           <td>${registro.defeito}</td>
           <td>${registro.setorOrigem}</td>
-          <td>${registro.foto}</td>
-        </tr>`;
-      tbody.innerHTML += row;
-    });
-  }
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
 
-  // Função para limpar os campos do formulário
-  function limparCampos() {
-    document.getElementById('data').value = '';
-    document.getElementById('cliente').value = '';
-    document.getElementById('nBobina').value = '';
-    document.getElementById('nFardos').value = '';
-    document.getElementById('nCaixa').value = '';
-    document.getElementById('defeito').value = '';
-    document.getElementById('setorOrigem').value = '';
-    document.getElementById('foto').value = '';
-  }
+    // Função para filtrar os registros pelo cliente
+    function pesquisarPorCliente() {
+      const clientePesquisa = document.getElementById('consultaCliente').value.toLowerCase();
+      const tbody = document.querySelector('#tabelaReclamacoes tbody');
+      tbody.innerHTML = '';  // Limpar tabela
 
-  // Função para baixar os registros em CSV
-  function baixarCSV() {
-    const csvRows = [
-      ['Data', 'Cliente', 'Nº Bobina', 'Nº Fardos', 'Nº Caixa', 'Defeito Liberado', 'Setor Origem', 'Foto']
-    ];
+      const registrosFiltrados = registros.filter(registro => 
+        registro.cliente.toLowerCase().includes(clientePesquisa)
+      );
 
-    registros.forEach(registro => {
-      csvRows.push([
-        registro.data,
-        registro.cliente,
-        registro.nBobina,
-        registro.nFardos,
-        registro.nCaixa,
-        registro.defeito,
-        registro.setorOrigem,
-        registro.foto
-      ]);
-    });
-
-    const csvContent = csvRows.map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "registros.csv";
-    link.click();
-  }
-
-  // Mostrar registros ao carregar a página
-  window.onload = mostrarRegistros;
-</script>
+      registrosFiltrados.forEach(registro => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+          <td>${registro.data}</td>
+          <td>${registro.cliente}</td>
+          <td>${registro.nBobina}</td>
+          <td>${registro.nFardos}</td>
+          <td>${registro.nCaixa}</td>
+          <td>${registro.defeito}</td>
+          <td>${registro.setorOrigem}</td>
+          <td><img src="${registro.foto}" alt="Foto" style="width: 50px; height: auto;"></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  </script>
 
 </body>
 </html>
