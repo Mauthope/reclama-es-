@@ -39,19 +39,22 @@
     label {
       font-size: 18px;
       color: #555;
+      display: block;
+      margin: 10px 0 5px; /* Ajustado para maior espaçamento */
     }
 
     select, input {
       margin: 10px 0;
       padding: 10px;
       font-size: 16px;
-      width: 100%;
+      width: calc(100% - 22px); /* Ajusta a largura para o padding e borda */
       max-width: 400px;
       border-radius: 8px;
       border: 1px solid #ccc;
       background-color: #f9f9f9;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       outline: none;
+      box-sizing: border-box; /* Garante que o padding não afete a largura */
     }
 
     button {
