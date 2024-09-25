@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesquisa de Reclamações por Cliente e Setor</title>
+  <title>Pesquisa de Reclamações</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -12,7 +12,6 @@
       background-color: #f4f4f9;
       margin: 0;
       padding: 0;
-      overflow-y: scroll;
       height: 100vh;
       display: flex;
       justify-content: center;
@@ -27,7 +26,6 @@
       max-width: 600px;
       width: 100%;
       text-align: center;
-      margin-bottom: 20px;
     }
 
     h1, h2 {
@@ -39,265 +37,188 @@
     label {
       font-size: 18px;
       color: #555;
+      display: block;
+      text-align: left;
+      margin-top: 10px;
     }
 
     select, input {
-      margin: 10px 0;
-      padding: 10px;
-      font-size: 16px;
       width: 100%;
-      max-width: 400px;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
       background-color: #f9f9f9;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      outline: none;
-    }
-
-    select:focus, input:focus {
-      border-color: #36a2eb;
-    }
-
-    h2 {
-      font-size: 20px;
-      margin: 20px 0;
-      color: #444;
-    }
-
-    #chartContainer, #sectorChartContainer {
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-
-    canvas.loaded {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-    }
-
-    html {
-      overflow-y: scroll;
-    }
-
-    .form-group {
-      margin: 10px 0;
     }
 
     button {
       padding: 10px 20px;
-      background-color: #36a2eb;
+      font-size: 16px;
       color: white;
+      background-color: #36a2eb;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
+      margin-top: 20px;
     }
 
-    button:hover {
-      background-color: #007bff;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>Pesquisa de Reclamações por Cliente</h1>
+<div class="container">
+  <h1>Registro de Reclamações</h1>
 
-    <!-- Formulário para adicionar nova reclamação -->
-    <div class="form-group">
-      <h2>Registrar Nova Reclamação</h2>
-      <label for="newCliente">Cliente:</label>
-      <input type="text" id="newCliente" placeholder="Nome do Cliente">
-      
-      <label for="newSetor">Setor:</label>
-      <input type="text" id="newSetor" placeholder="Nome do Setor">
-      
-      <label for="newProblema">Problema:</label>
-      <input type="text" id="newProblema" placeholder="Descrição do Problema">
-      
-      <label for="newQuantidade">Quantidade:</label>
-      <input type="number" id="newQuantidade" placeholder="Quantidade de problemas" min="1">
-      
-      <button onclick="registrarReclamacao()">Registrar Reclamação</button>
-    </div>
+  <label for="data">Data:</label>
+  <input type="date" id="data">
 
-    <h2>Reclamações:</h2>
-    <div id="chartContainer">
-      <canvas id="reclamacoesChart"></canvas>
-    </div>
+  <label for="cliente">Cliente:</label>
+  <input type="text" id="cliente">
 
-    <h1>Pesquisa de Reclamações por Setor</h1>
+  <label for="nBobina">Nº da Bobina:</label>
+  <input type="text" id="nBobina">
 
-    <label for="setor">Selecione o Setor:</label>
-    <select id="setor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um setor</option>
-    </select>
+  <label for="nFardos">Nº dos Fardos:</label>
+  <input type="text" id="nFardos">
 
-    <label for="clienteSetor">Selecione o Cliente:</label>
-    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um cliente</option>
-    </select>
+  <label for="nCaixa">Nº da Caixa:</label>
+  <input type="text" id="nCaixa">
 
-    <h2>Problemas por Setor e Cliente:</h2>
-    <div id="sectorChartContainer">
-      <canvas id="sectorReclamacoesChart"></canvas>
-    </div>
-  </div>
+  <label for="defeito">Defeito Liberado:</label>
+  <select id="defeito">
+    <option value="Falha de Lâmina">Falha de Lâmina</option>
+    <option value="Falha de Impressão">Falha de Impressão</option>
+    <option value="Dobrado">Dobrado</option>
+  </select>
 
-  <script>
-    let clientesData = [];
-    let chart = null;
-    let sectorChart = null;
+  <label for="setorOrigem">Setor de Origem:</label>
+  <input type="text" id="setorOrigem">
 
-    window.onload = function() {
-      fetch('atendimento.xlsx')
-        .then(response => response.arrayBuffer())
-        .then(data => {
-          let workbook = XLSX.read(data, { type: 'array' });
-          let firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          let jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+  <label for="foto">Anexar Foto:</label>
+  <input type="file" id="foto">
 
-          clientesData = jsonData.slice(1).map(row => ({
-            cliente: row[2],      // Coluna 3 (RAZAO_SOCIAL)
-            setor: row[3],        // Coluna 4 (SETOR)
-            problema: row[4],     // Coluna 5 (PROBLEMA)
-            quantidade: row[6]    // Coluna 7 (QUANT_PROBLEMA)
-          }));
+  <button onclick="salvarRegistro()">Salvar</button>
+  <button onclick="baixarCSV()">Baixar CSV</button>
 
-          preencherFiltros();
-          mostrarReclamacoesAgrupadas();
-        });
-    };
+  <h2>Registros</h2>
+  <table id="tabelaReclamacoes">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Cliente</th>
+        <th>Nº Bobina</th>
+        <th>Nº Fardos</th>
+        <th>Nº Caixa</th>
+        <th>Defeito Liberado</th>
+        <th>Setor Origem</th>
+        <th>Foto</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Registros aparecerão aqui -->
+    </tbody>
+  </table>
+</div>
 
-    function preencherFiltros() {
-      let clientesUnicos = [...new Set(clientesData.map(d => d.cliente))];
-      let setoresUnicos = [...new Set(clientesData.map(d => d.setor))];
+<script>
+  let registros = JSON.parse(localStorage.getItem('registros')) || [];
 
-      let clientesSelect = document.getElementById('cliente');
-      let clientesSetorSelect = document.getElementById('clienteSetor');
-      let setoresSelect = document.getElementById('setor');
+  // Função para salvar o registro no localStorage
+  function salvarRegistro() {
+    const data = document.getElementById('data').value;
+    const cliente = document.getElementById('cliente').value;
+    const nBobina = document.getElementById('nBobina').value;
+    const nFardos = document.getElementById('nFardos').value;
+    const nCaixa = document.getElementById('nCaixa').value;
+    const defeito = document.getElementById('defeito').value;
+    const setorOrigem = document.getElementById('setorOrigem').value;
+    const foto = document.getElementById('foto').files[0] ? document.getElementById('foto').files[0].name : 'Nenhuma';
 
-      clientesUnicos.forEach(cliente => {
-        let option = document.createElement('option');
-        option.value = cliente;
-        option.textContent = cliente;
-        clientesSelect.appendChild(option);
+    const registro = { data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto };
+    registros.push(registro);
+    localStorage.setItem('registros', JSON.stringify(registros));
+    mostrarRegistros();
+    limparCampos();
+  }
 
-        let optionSetor = document.createElement('option');
-        optionSetor.value = cliente;
-        optionSetor.textContent = cliente;
-        clientesSetorSelect.appendChild(optionSetor);
-      });
+  // Função para mostrar os registros na tabela
+  function mostrarRegistros() {
+    const tbody = document.querySelector('#tabelaReclamacoes tbody');
+    tbody.innerHTML = '';
+    registros.forEach((registro, index) => {
+      const row = `
+        <tr>
+          <td>${registro.data}</td>
+          <td>${registro.cliente}</td>
+          <td>${registro.nBobina}</td>
+          <td>${registro.nFardos}</td>
+          <td>${registro.nCaixa}</td>
+          <td>${registro.defeito}</td>
+          <td>${registro.setorOrigem}</td>
+          <td>${registro.foto}</td>
+        </tr>`;
+      tbody.innerHTML += row;
+    });
+  }
 
-      setoresUnicos.forEach(setor => {
-        let option = document.createElement('option');
-        option.value = setor;
-        option.textContent = setor;
-        setoresSelect.appendChild(option);
-      });
-    }
+  // Função para limpar os campos do formulário
+  function limparCampos() {
+    document.getElementById('data').value = '';
+    document.getElementById('cliente').value = '';
+    document.getElementById('nBobina').value = '';
+    document.getElementById('nFardos').value = '';
+    document.getElementById('nCaixa').value = '';
+    document.getElementById('defeito').value = '';
+    document.getElementById('setorOrigem').value = '';
+    document.getElementById('foto').value = '';
+  }
 
-    function registrarReclamacao() {
-      let newCliente = document.getElementById('newCliente').value;
-      let newSetor = document.getElementById('newSetor').value;
-      let newProblema = document.getElementById('newProblema').value;
-      let newQuantidade = parseInt(document.getElementById('newQuantidade').value, 10);
+  // Função para baixar os registros em CSV
+  function baixarCSV() {
+    const csvRows = [
+      ['Data', 'Cliente', 'Nº Bobina', 'Nº Fardos', 'Nº Caixa', 'Defeito Liberado', 'Setor Origem', 'Foto']
+    ];
 
-      if (newCliente && newSetor && newProblema && newQuantidade > 0) {
-        clientesData.push({
-          cliente: newCliente,
-          setor: newSetor,
-          problema: newProblema,
-          quantidade: newQuantidade
-        });
+    registros.forEach(registro => {
+      csvRows.push([
+        registro.data,
+        registro.cliente,
+        registro.nBobina,
+        registro.nFardos,
+        registro.nCaixa,
+        registro.defeito,
+        registro.setorOrigem,
+        registro.foto
+      ]);
+    });
 
-        alert('Reclamação registrada com sucesso!');
-        mostrarReclamacoesAgrupadas();
-        preencherFiltros();  // Atualiza os filtros
-      } else {
-        alert('Por favor, preencha todos os campos.');
-      }
-    }
+    const csvContent = csvRows.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "registros.csv";
+    link.click();
+  }
 
-    function mostrarReclamacoesAgrupadas() {
-      let reclamacoes = clientesData.map(d => ({ problema: d.problema, quantidade: d.quantidade }));
-      let reclamacoesAgrupadas = agruparProblemas(reclamacoes);
-
-      let problemas = Object.keys(reclamacoesAgrupadas);
-      let quantidades = Object.values(reclamacoesAgrupadas);
-
-      if (chart) {
-        chart.destroy();
-      }
-
-      let ctx = document.getElementById('reclamacoesChart').getContext('2d');
-      chart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: problemas.map((p, index) => `${p}: ${quantidades[index]} defeituosos`),
-          datasets: [{
-            data: quantidades,
-            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF9F40', '#4BC0C0']
-          }]
-        },
-        options: {
-          responsive: true
-        }
-      });
-    }
-
-    function mostrarReclamacoesPorSetor() {
-      let cliente = document.getElementById('clienteSetor').value;
-      let setor = document.getElementById('setor').value;
-
-      if (cliente && setor) {
-        let reclamacoesFiltradas = clientesData.filter(d => d.cliente === cliente && d.setor === setor);
-
-        let problemas = reclamacoesFiltradas.map(d => d.problema);
-        let quantidades = reclamacoesFiltradas.map(d => d.quantidade);
-
-        if (sectorChart) {
-          sectorChart.destroy();
-        }
-
-        let ctx = document.getElementById('sectorReclamacoesChart').getContext('2d');
-        sectorChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: problemas,
-            datasets: [{
-              label: 'Quantidade de Problemas',
-              data: quantidades,
-              backgroundColor: '#36A2EB'
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: {
-                beginAtZero: true
-              }
-            }
-          }
-        });
-      }
-    }
-
-    function agruparProblemas(reclamacoes) {
-      return reclamacoes.reduce((acc, curr) => {
-        acc[curr.problema] = (acc[curr.problema] || 0) + curr.quantidade;
-        return acc;
-      }, {});
-    }
-  </script>
+  // Mostrar registros ao carregar a página
+  window.onload = mostrarRegistros;
+</script>
 
 </body>
 </html>
