@@ -6,8 +6,6 @@
   <title>Registro e Pesquisa de Reclamações</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -293,59 +291,22 @@
       modal.style.display = "none"; // Oculta o modal
     }
 
-// Função para baixar os registros em Excel
-function downloadExcel() {
-  // Criar uma nova pasta de trabalho
-  const wb = XLSX.utils.book_new();
-  const wsData = [
-    ["Data", "Cliente", "Nº Bobina", "Nº Fardos", "Nº Caixa", "Defeito Liberado", "Setor Origem", "Foto"],
-  ];
+    // Função para baixar os registros em CSV
+    function downloadCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Data,Cliente,Nº Bobina,Nº Fardos,Nº Caixa,Defeito Liberado,Setor Origem,Foto\n";
 
-  // Adiciona os dados à matriz
-  registros.forEach(registro => {
-    wsData.push([
-      registro.data,
-      registro.cliente,
-      registro.nBobina,
-      registro.nFardos,
-      registro.nCaixa,
-      registro.defeito,
-      registro.setorOrigem,
-      registro.foto, // Você pode usar o URL da imagem
-    ]);
-  });
+      registros.forEach(registro => {
+        csvContent += `${registro.data},${registro.cliente},${registro.nBobina},${registro.nFardos},${registro.nCaixa},${registro.defeito},${registro.setorOrigem},${registro.foto}\n`;
+      });
 
-  // Criar uma nova planilha
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Adicionando as imagens
-  registros.forEach((registro, index) => {
-    if (registro.foto) {
-      const img = new Image();
-      img.src = registro.foto;
-
-      img.onload = function() {
-        const imgId = XLSX.utils.create_ssf().push({r: 0, c: 7, h: img.height, w: img.width});
-        
-        const imgObj = {
-          t: 'z',
-          v: registro.foto,
-          r: imgId,
-        };
-
-        ws[`!objects`] = ws[`!objects`] || [];
-        ws[`!objects`].push(imgObj);
-      };
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "reclamacoes.csv");
+      document.body.appendChild(link); // Required for FF
+      link.click();
     }
-  });
-
-  // Adiciona a planilha à pasta de trabalho
-  XLSX.utils.book_append_sheet(wb, ws, "Reclamações");
-
-  // Faz o download do arquivo Excel
-  XLSX.writeFile(wb, "reclamacoes.xlsx");
-}
-
 
     // Função para pesquisar por cliente
     function pesquisarPorCliente() {
