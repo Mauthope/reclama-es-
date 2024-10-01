@@ -170,25 +170,7 @@
     </div>
 
   </div>
-<!-- /////////////////////////////////////////////////////////////////// -->
-  <div class="container">
-    <h1>Pesquisa de Reclamações por Setor</h1>
 
-    <label for="setor">Selecione o Setor:</label>
-    <select id="setor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um setor</option>
-    </select>
-    <p></p>
-    <label for="clienteSetor">Selecione o Cliente:</label>
-    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
-      <option value="">Escolha um cliente</option>
-    </select>
-
-    <div id="sectorChartContainer">
-      <canvas id="sectorReclamacoesChart"></canvas>
-    </div>
-
-  </div>
 <!--///////////////////////////////////////////////////////////////////////////// -->
   <div class="container">
     <h1>Registro de Reclamações</h1>
@@ -274,7 +256,25 @@
   </div>
 
   </div>
+<!-- /////////////////////////////////////////////////////////////////// -->
+  <div class="container">
+    <h1>Pesquisa de Reclamações por Setor</h1>
 
+    <label for="setor">Selecione o Setor:</label>
+    <select id="setor" onchange="mostrarReclamacoesPorSetor()">
+      <option value="">Escolha um setor</option>
+    </select>
+    <p></p>
+    <label for="clienteSetor">Selecione o Cliente:</label>
+    <select id="clienteSetor" onchange="mostrarReclamacoesPorSetor()">
+      <option value="">Escolha um cliente</option>
+    </select>
+
+    <div id="sectorChartContainer">
+      <canvas id="sectorReclamacoesChart"></canvas>
+    </div>
+
+  </div>
   <script>
     let clientesData = [];
     let chart = null;
