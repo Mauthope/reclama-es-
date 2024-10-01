@@ -199,8 +199,8 @@
     </div>
 
     <div class="field-container">
-      <label for="cliente">Cliente:</label>
-      <input type="text" id="cliente2">
+      <label for="cliente2">Cliente:</label>
+      <input type="text" id="cliente2">   <!-- altera cliente-->
     </div>
 
     <div class="field-container">
@@ -496,7 +496,7 @@
       }
 
       // Adiciona os dados ao array de registros
-      registros.push({ data, cliente, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto: fotoUrl }); <!-- muda o cliente -->
+      registros.push({ data, cliente2, nBobina, nFardos, nCaixa, defeito, setorOrigem, foto: fotoUrl }); <!-- muda o cliente -->
 
       // Salvar no localStorage
       localStorage.setItem('registros', JSON.stringify(registros));
