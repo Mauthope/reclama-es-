@@ -557,7 +557,7 @@
     // Função para baixar os registros em CSV
     function downloadCSV() {
       let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Data,Cliente,Nº Bobina,Nº Fardos,Nº Caixa,Defeito Liberado,Setor Origem,Foto\n";
+      csvContent += "Data,Cliente2,Nº Bobina,Nº Fardos,Nº Caixa,Defeito Liberado,Setor Origem,Foto\n";
 
       registros.forEach(registro => {
         csvContent += `${registro.data},${registro.cliente},${registro.nBobina},${registro.nFardos},${registro.nCaixa},${registro.defeito},${registro.setorOrigem},${registro.foto}\n`;
@@ -582,7 +582,7 @@
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${registro.data}</td>
-            <td>${registro.cliente}</td>
+            <td>${registro.cliente2}</td>
             <td>${registro.nBobina}</td>
             <td>${registro.nFardos}</td>
             <td>${registro.nCaixa}</td>
