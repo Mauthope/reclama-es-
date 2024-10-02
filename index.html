@@ -560,7 +560,7 @@
       csvContent += "Data,Cliente2,Nº Bobina,Nº Fardos,Nº Caixa,Defeito Liberado,Setor Origem,Foto\n";
 
       registros.forEach(registro => {
-        csvContent += `${registro.data},${registro.cliente},${registro.nBobina},${registro.nFardos},${registro.nCaixa},${registro.defeito},${registro.setorOrigem},${registro.foto}\n`;
+        csvContent += `${registro.data},${registro.cliente2},${registro.nBobina},${registro.nFardos},${registro.nCaixa},${registro.defeito},${registro.setorOrigem},${registro.foto}\n`;
       });
 
       const encodedUri = encodeURI(csvContent);
